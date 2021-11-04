@@ -3,10 +3,11 @@ import {
   ApolloClient, 
   InMemoryCache, 
   ApolloProvider, 
-  useQuery, 
+  useSubscription, 
   useMutation,
   gql, 
 } from '@apollo/client';
+import { WebSocketLink } from '@apollo/client/link/ws';
 import { 
   Container,
   Row,
@@ -15,16 +16,27 @@ import {
   Button,
 } from "shards-react";
 
-// apollo client connection
+
+// websocket link
+const link = new WebSocketLink({
+  uri: `ws://localhost:4000/`,
+  options: {
+    reconnect: true,
+  },
+});
+
+
+// apollo client connection - added link for websocket
 const client = new ApolloClient({
+  link,
   uri: "http://localhost:4000/",
   cache: new InMemoryCache()
 });
 
 
-// graphQl Query
+// graphQl Query- turned into subscription
 const GET_MESSAGES = gql`
-  query {
+  subscription {
     messages {
       id
       content
@@ -33,10 +45,18 @@ const GET_MESSAGES = gql`
 }
 `;
 
+// graphql useMutation
+const POST_MESSAGE = gql`
+mutation ($user:String!, $content:String!) {
+  postMessage(user: $user, content: $content)
+}
+`;
+
 
 // messages component
 const Messages = ({ user }) => {
-  const { data } = useQuery(GET_MESSAGES);
+  // useQuery turned into useSubscription
+  const { data } = useSubscription(GET_MESSAGES);
   if (!data) {
     return null;
   }
@@ -96,10 +116,14 @@ const Chat = () => {
     content: '',
   });
 
+  // mutation for postMessage
+  const [postMessage] = useMutation(POST_MESSAGE);
+
   // onSend function for submit button/enter key
   const onSend = () => {
     // if no message dont send
     if (state.content.length > 0) {
+      // mutation variables
       postMessage({
         variables: state,
       });
