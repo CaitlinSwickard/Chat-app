@@ -4,6 +4,7 @@ import {
   InMemoryCache, 
   ApolloProvider, 
   useQuery, 
+  useMutation,
   gql, 
 } from '@apollo/client';
 import { 
@@ -87,14 +88,75 @@ const Messages = ({ user }) => {
 };
 
 
-// chat component - wrapped in shards container
+// chat component - wrapped in shardsUI container
 const Chat = () => {
+  // state handler for chat 
+  const [state, stateSet] = React.useState({
+    user: 'Jack',
+    content: '',
+  });
+
+  // onSend function for submit button/enter key
+  const onSend = () => {
+    // if no message dont send
+    if (state.content.length > 0) {
+      postMessage({
+        variables: state,
+      });
+    }
+    stateSet({
+      ...state,
+      content: "",
+    });
+  };
+
+
   return (
   <Container>
-    <Messages user="Mary"/>
-  </Container>
+    <Messages user={state.user}/>
+    {/* styling for user input form */}
+    <Row>
+      <Col xs={2} style={{ padding: 0}}>
+        <FormInput
+          label='User'
+          value={state.user}
+          onChange={(evt) => 
+            stateSet({
+            ...state,
+            user: evt.target.value,
+          })
+        }
+        />
+      </Col>
+      {/* styling and form for messaging input */}
+      <Col xs={8}>
+      <FormInput
+            label="Content"
+            value={state.content}
+            onChange={(evt) =>
+              stateSet({
+                ...state,
+                content: evt.target.value,
+              })
+            }
+            // event handler for when someone presses enter key to submit
+            onKeyUp={(evt) => {
+              if (evt.keyCode === 13) {
+                onSend();
+              }
+            }}
+          />
+        </Col>
+        {/* submit button logic and styling */}
+        <Col xs={2} style={{ padding: 0 }}>
+          <Button onClick={() => onSend()} style={{ width: "100%" }}>
+            Send
+          </Button>
+        </Col>
+      </Row>
+    </Container>
   );
-} ;
+};
 
 
 // chat component wrapped in apolloprovider
